@@ -67,10 +67,14 @@ class CustomerApi:
 
         self.refresh_access_token_if_need()
 
+        # Refresh replaces the token pair. Keep one generation for the
+        # encryption key and header even if another request refreshes it.
+        token_info = self.token_info
+
         rid = str(uuid.uuid4())
         sid = ""
         md5 = hashlib.md5()
-        rid_refresh_token = rid + self.token_info.refresh_token
+        rid_refresh_token = rid + token_info.refresh_token
         md5.update(rid_refresh_token.encode('utf-8'))
         hash_key = md5.hexdigest()
         secret = _secret_generating(rid, sid, hash_key)
@@ -99,8 +103,8 @@ class CustomerApi:
             "X-sid": sid,
             "X-time": str(t),
         }
-        if not skip_token and self.token_info is not None and len(self.token_info.access_token) > 0:
-            headers["X-token"] = self.token_info.access_token
+        if not skip_token and token_info is not None and len(token_info.access_token) > 0:
+            headers["X-token"] = token_info.access_token
 
         sign = _restful_sign(hash_key,
                              query_encdata,
